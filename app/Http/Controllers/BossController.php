@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Boss;
 use Illuminate\Http\Request;
 
-//Radi
+//BossController
 class BossController extends Controller
 {
     public function getYourTeam(Request $request)
