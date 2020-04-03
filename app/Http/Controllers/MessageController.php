@@ -14,14 +14,14 @@ class MessageController extends Controller
         $bossID = $request->input('idBoss');
         $message = $request->input('message');
         $model = new Message();
-        $activity = new UserActivity();
+        $activityModel = new UserActivity();
         try {
             $isInserted = $model->sendMessage($employeeID, $bossID, $message);
             $ip = request()->ip();
             $dateTime = date("Y-m-d H:i:s");
             $activity = "Message sent to boss";
             $method = request()->getMethod();
-            $activity->insert($idEmployee, $ip, $dateTime, $activity, $method);
+            $activityModel->insert($idEmployee, $ip, $dateTime, $activity, $method);
             if ($isInserted) {
                 return response(['message' => 'Your message is sent!'], 201);
             }
