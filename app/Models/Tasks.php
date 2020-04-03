@@ -27,6 +27,30 @@ class Tasks
 
             ->get();
     }
+    public function getTasksBySearch($employeeID, $idRole, $done = null, $searchValue)
+    {
+        if ($idRole == 1) {
+            $queryID = "t.idBoss";
+        } else {
+            $queryID = "t.idEmployee";
+        }
+        if ($done === null) {
+            $doneOperator = "<>";
+        } else {
+            $doneOperator = "=";
+        }
+
+        return \DB::table("tasks AS t")
+            ->join("users AS u", "t.idEmployee", "=", "u.id")
+            ->select("t.*", "u.first_name AS emp_first_name", "u.last_name AS emp_last_name", "u.imagePath", "u.imagePathNew")
+            ->where([
+                [$queryID, '=', $employeeID],
+                ['t.done', $doneOperator, $done],
+                ['t.task_name', "like", "%$searchValue%"],
+            ])
+
+            ->get();
+    }
     public function updateTask($employeeID, $idTask)
     {
 

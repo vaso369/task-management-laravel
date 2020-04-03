@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AddTaskRequest;
 use App\Models\Tasks;
+use App\Models\UserActivity;
 use Illuminate\Http\Request;
 
 class TasksController extends Controller
 {
     private $model;
-    private $employeeID;
-    private $idRole;
-    private $querydID;
     public function __construct()
     {
         $this->model = new Tasks();
+        $this->activity = new UserActivity();
 
     }
     public function getAllTasks(Request $request)
@@ -35,10 +34,17 @@ class TasksController extends Controller
         $idRole = $request->input('idRole');
 
         $done = 0;
-        // $niz = ['emp' => $this->employeeID];
         try {
             $tasks = $this->model->getTasks($employeeID, $idRole, $done);
-            return response($tasks, 200);
+            $ip = request()->ip();
+            $dateTime = date("Y-m-d H:i:s");
+            $activity = "Getting progress tasks";
+            $method = request()->getMethod();
+            $isInserted = $this->activity->insert($employeeID, $ip, $dateTime, $activity, $method);
+            if ($isInserted) {
+                return response($tasks, 200);
+            }
+
         } catch (\PDOException $ex) {
             return response(['message' => $ex->getMessage()], 500);
         }
@@ -50,7 +56,36 @@ class TasksController extends Controller
         $done = 1;
         try {
             $tasks = $this->model->getTasks($employeeID, $idRole, $done);
-            return response($tasks, 200);
+            $ip = request()->ip();
+            $dateTime = date("Y-m-d H:i:s");
+            $activity = "Getting done tasks";
+            $method = request()->getMethod();
+            $isInserted = $this->activity->insert($employeeID, $ip, $dateTime, $activity, $method);
+            if ($isInserted) {
+                return response($tasks, 200);
+            }
+
+        } catch (\PDOException $ex) {
+            return response(['message' => $ex->getMessage()], 500);
+        }
+    }
+    public function getTasksBySearch(Request $request)
+    {
+        $employeeID = $request->input('idBoss');
+        $idRole = $request->input('idRole');
+        $done = $request->input('done');
+        $searchValue = $request->input('searchValue');
+        try {
+            $tasks = $this->model->getTasksBySearch($employeeID, $idRole, $done, $searchValue);
+            $ip = request()->ip();
+            $dateTime = date("Y-m-d H:i:s");
+            $activity = "Searching tasks";
+            $method = request()->getMethod();
+            $isInserted = $this->activity->insert($employeeID, $ip, $dateTime, $activity, $method);
+            if ($isInserted) {
+                return response($tasks, 200);
+            }
+
         } catch (\PDOException $ex) {
             return response(['message' => $ex->getMessage()], 500);
         }
@@ -62,7 +97,12 @@ class TasksController extends Controller
 
         try {
             $isUpdated = $this->model->updateTask($employeeID, $idTask);
-            if ($isUpdated) {
+            $ip = request()->ip();
+            $dateTime = date("Y-m-d H:i:s");
+            $activity = "Progress task finished";
+            $method = request()->getMethod();
+            $isInserted = $this->activity->insert($employeeID, $ip, $dateTime, $activity, $method);
+            if ($isUpdated && $isInserted) {
                 return response(["message" => "Task updated!"], 204);
             }
 

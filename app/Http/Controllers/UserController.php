@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use App\Models\UserActivity;
 use Illuminate\Http\Request;
 use \Firebase\JWT\JWT;
 
@@ -15,6 +16,7 @@ class UserController extends Controller
     public function __construct()
     {
         $this->model = new User();
+        $this->activity = new UserActivity();
     }
     public function register(RegisterRequest $request)
     {
@@ -59,6 +61,14 @@ class UserController extends Controller
                 return response($this->userJson, 201);
             } elseif ($user) {
                 $this->JWTtoken($user);
+                $ip = request()->ip();
+                $dateTime = date("Y-m-d H:i:s");
+                $activity = "User login";
+                $method = request()->getMethod();
+                $isInserted = $this->activity->insert($user->id, $ip, $dateTime, $activity, $method);
+                if ($isInserted) {
+                    return response($this->userJson, 200);
+                }
                 return response($this->userJson, 201);
             } else {
                 return response(['message' => 'You are not registered!'], 401);
@@ -111,12 +121,17 @@ class UserController extends Controller
 
         try {
             $isUpdated = $this->model->updateUser($first_name, $lastName, $username, $pass, $email, $idEmployee);
-            if ($isUpdated) {
+            $ip = request()->ip();
+            $dateTime = date("Y-m-d H:i:s");
+            $activity = "Edit profile";
+            $method = request()->getMethod();
+            $isInserted = $this->activity->insert($idEmployee, $ip, $dateTime, $activity, $method);
+            if ($isUpdated && $isInserted) {
                 return response(['message' => 'Your profile is updated!'], 204);
             }
         } catch (\PDOException $ex) {
             return response(['message' => $ex->getMessage()], 500);
         }
     }
-   
+
 }
